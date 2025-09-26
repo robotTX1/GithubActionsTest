@@ -8,6 +8,8 @@ jobs:
   bump-and-merge:
     if: github.event.comment.body == '/merge'
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
