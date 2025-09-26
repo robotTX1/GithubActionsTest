@@ -16,6 +16,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          # Fetch all history so we can find the merge-base
+          fetch-depth: 0
       - name: Setup GraalVM
         uses: graalvm/setup-graalvm@v1
         with:
@@ -25,20 +28,36 @@ jobs:
           cache: maven
       - name: Configure Git
         run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
       - name: Fetch PR
         run: gh pr checkout ${{ github.event.issue.number }}
+      - name: Squash and Combine Commits
+        run: |
+          # Get the name of the target branch (e.g., 'main' or 'develop')
+          TARGET_BRANCH=$(gh pr view ${{ github.event.issue.number }} --json baseRefName -q .baseRefName)
+          echo "Target branch is $TARGET_BRANCH"
+
+          # Find the commit where this branch split from the target branch
+          MERGE_BASE=$(git merge-base origin/$TARGET_BRANCH HEAD)
+          echo "Merge base is $MERGE_BASE"
+
+          # Get all commit messages from the PR, separated by two newlines
+          COMMIT_MESSAGES=$(git log $MERGE_BASE..HEAD --pretty=format:"%s%n%n%b")
+
+          # Reset the branch to the merge base, but keep all changes staged
+          git reset --soft $MERGE_BASE
+
+          # Commit the staged changes as a single new commit with the combined message
+          git commit -m "$COMMIT_MESSAGES"
+
       - name: Detect version bump
         id: bump
         run: |
-          # Get last commit message
+          # This logic now correctly reads the single, squashed commit message
           LAST_MSG=$(git log -1 --pretty=%B)
           echo "Last commit: $LAST_MSG"
-
-          # Default bump = patch
           BUMP="patch"
-
           if echo "$LAST_MSG" | grep -q "BREAKING CHANGE"; then
             BUMP="major"
           elif echo "$LAST_MSG" | grep -q "^feat"; then
@@ -46,29 +65,28 @@ jobs:
           elif echo "$LAST_MSG" | grep -q "^fix"; then
             BUMP="patch"
           fi
-
           echo "Bump type: $BUMP"
-
-          # Read current version
           CURRENT_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "Current version: $CURRENT_VERSION"
-
           case "$BUMP" in
             major) NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. -v OFS=. '{$1+=1;$2=0;$3=0;print}') ;;
             minor) NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. -v OFS=. '{$2+=1;$3=0;print}') ;;
             patch) NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. -v OFS=. '{$3+=1;print}') ;;
           esac
-
           echo "Version bump ($CURRENT_VERSION) -> ($NEW_VERSION)"
-
           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
       - name: Bump version in pom.xml
         run: |
           mvn --batch-mode versions:set -DnewVersion=$NEW_VERSION
           mvn --batch-mode versions:commit
+      - name: Commit Version Bump
+        run: |
+          git add pom.xml
+          git commit -m "chore: Bump version to ${{ env.NEW_VERSION }}"
       - name: Push Version Bump
-        run: git push origin HEAD
+        run: git push --force-with-lease origin HEAD
+
       - name: Merge PR
-        run: gh pr merge ${{ github.event.issue.number }} --merge --auto
+        run: gh pr merge ${{ github.event.issue.number }} --squash --auto
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
