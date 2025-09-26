@@ -1,14 +1,12 @@
 name: Auto increment version and merge PR
 
 on:
-  workflow_dispatch:
-    inputs:
-      pr_number:
-        description: 'Pull Request number'
-        required: true
+  issue_comment:
+    types: [created]
 
 jobs:
   bump-and-merge:
+    if: github.event.comment.body == '/merge'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
