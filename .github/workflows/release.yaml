@@ -66,12 +66,17 @@ jobs:
         run: |
           mvn --batch-mode versions:set -DnewVersion=$NEW_VERSION
           mvn --batch-mode versions:commit
-      - name: Commit and tag
+      - name: Amend last commit with version bump
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
           git add pom.xml
-          git commit -m "chore(release): $NEW_VERSION [skip ci]" || echo "No changes to commit"
+          # Amend previous commit
+          git commit --amend --no-edit
+          
           git tag -a "v$NEW_VERSION" -m "Release v$NEW_VERSION"
-          git push
+          
+          # Force push because we rewrote history
+          git push --force
           git push origin "v$NEW_VERSION"
