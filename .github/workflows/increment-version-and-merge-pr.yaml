@@ -4,8 +4,6 @@ on:
   issue_comment:
     types: [created]
 
-
-
 jobs:
   bump-and-merge:
     if: github.event.comment.body == '/merge'
