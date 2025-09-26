@@ -4,10 +4,15 @@ on:
   issue_comment:
     types: [created]
 
+
+
 jobs:
   bump-and-merge:
     if: github.event.comment.body == '/merge'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
