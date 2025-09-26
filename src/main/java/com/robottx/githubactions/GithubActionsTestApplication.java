@@ -13,4 +13,9 @@ public class GithubActionsTestApplication {
 		SpringApplication.run(GithubActionsTestApplication.class, args);
 	}
 
+	@Bean
+	public RestTemplate getRestTemplate(RestTemplateBuilder builder) {
+		return builder.build();
+	}
+
 }
