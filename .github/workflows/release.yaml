@@ -66,6 +66,11 @@ jobs:
         run: |
           mvn --batch-mode versions:set -DnewVersion=$NEW_VERSION
           mvn --batch-mode versions:commit
+      - name: Get last commit message
+        id: last_commit
+        run: |
+          MSG=$(git log --no-merges -1 --pretty=%B)
+          echo "MSG=$MSG" >> $GITHUB_ENV
       - name: Amend last commit with version bump
         run: |
           git config --global user.name "github-actions[bot]"
@@ -73,7 +78,7 @@ jobs:
           
           git add pom.xml
           # Amend previous commit
-          git commit --amend -m "${{ github.event.pull_request.title }}"
+          git commit --amend -m "$MSG"
           
           git tag -a "v$NEW_VERSION" -m "Release v$NEW_VERSION"
           
