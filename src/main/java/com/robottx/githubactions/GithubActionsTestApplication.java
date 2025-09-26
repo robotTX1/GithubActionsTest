@@ -1,5 +1,6 @@
 package com.robottx.githubactions;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.client.RestTemplateBuilder;
@@ -16,6 +17,11 @@ public class GithubActionsTestApplication {
 	@Bean
 	public RestTemplate getRestTemplate(RestTemplateBuilder builder) {
 		return builder.build();
+	}
+
+	@Bean("test")
+	public ObjectMapper getObjectMapper() {
+		return new ObjectMapper();
 	}
 
 }
