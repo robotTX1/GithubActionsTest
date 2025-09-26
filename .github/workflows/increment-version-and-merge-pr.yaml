@@ -85,7 +85,11 @@ jobs:
           git commit -m "chore: Bump version to ${{ env.NEW_VERSION }}"
       - name: Push Version Bump
         run: git push --force-with-lease origin HEAD
-
+      - name: Rebase onto target
+        run: |
+          TARGET_BRANCH=$(gh pr view ${{ github.event.issue.number }} --json baseRefName -q .baseRefName)
+          git fetch origin $TARGET_BRANCH
+          git rebase origin/$TARGET_BRANCH
       - name: Merge PR
         run: gh pr merge ${{ github.event.issue.number }} --squash --auto
         env:
