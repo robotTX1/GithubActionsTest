@@ -73,7 +73,7 @@ jobs:
           
           git add pom.xml
           # Amend previous commit
-          git commit --amend --no-edit
+          git commit --amend -m "${{ github.event.pull_request.title }}"
           
           git tag -a "v$NEW_VERSION" -m "Release v$NEW_VERSION"
           
