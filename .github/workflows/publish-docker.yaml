@@ -52,6 +52,7 @@ jobs:
         id: build
         uses: docker/build-push-action@v6
         with:
+          file: ${{ github.event.inputs.dockerfile }}
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ env.REGISTRY_IMAGE }}${{ env.IMAGE_TAG_SUFFIX }}
