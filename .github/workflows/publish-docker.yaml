@@ -2,9 +2,15 @@ name: Publish Docker images
 
 on:
   workflow_dispatch:
+    inputs:
+      dockerfile:
+        description: 'Which Dockerfile to use (default is Dockerfile)'
+        required: false
+        default: Dockerfile
 
 env:
   REGISTRY_IMAGE: ${{ vars.DOCKERHUB_USERNAME }}/github-actions-test
+  IMAGE_TAG_SUFFIX: ${{ github.event.inputs.dockerfile == 'Dockerfile.native' && '-native' || '' }}
 
 jobs:
   build:
@@ -48,7 +54,7 @@ jobs:
         with:
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
-          tags: ${{ env.REGISTRY_IMAGE }}
+          tags: ${{ env.REGISTRY_IMAGE }}${{ env.IMAGE_TAG_SUFFIX }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
 
       - name: Export digest
@@ -100,7 +106,7 @@ jobs:
         working-directory: ${{ runner.temp }}/digests
         run: |
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-          $(printf '${{ env.REGISTRY_IMAGE }}@sha256:%s ' *)
+          $(printf '${{ env.REGISTRY_IMAGE }}${{ env.IMAGE_TAG_SUFFIX }}@sha256:%s ' *)
 
       - name: Inspect image
         run: |
