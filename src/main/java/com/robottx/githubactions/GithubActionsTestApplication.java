@@ -29,4 +29,9 @@ public class GithubActionsTestApplication {
 		return new ObjectMapper();
 	}
 
+	@Bean("test3")
+	public ObjectMapper getObjectMapper3() {
+		return new ObjectMapper();
+	}
+
 }
