@@ -15,7 +15,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform:
+        platform: [ linux/amd64, linux/arm64 ]
+        include:
           - platform: linux/amd64
             runner: ubuntu-latest
           - platform: linux/arm64
