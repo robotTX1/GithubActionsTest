@@ -105,9 +105,9 @@ jobs:
         working-directory: ${{ runner.temp }}/digests
         run: |
           docker buildx imagetools create \
-          -t $REGISTRY_IMAGE:${{ github.event.inputs.version }} \
-          -t $REGISTRY_IMAGE:latest \
-          $(printf '$REGISTRY_IMAGE@sha256:%s ' *)
+          -t "${REGISTRY_IMAGE,,}:${{ github.event.inputs.version }}" \
+          -t "${REGISTRY_IMAGE,,}:latest" \
+          $(printf '%s@sha256:%s ' "${REGISTRY_IMAGE,,}" *)
 
       - name: Inspect image
         run: |
