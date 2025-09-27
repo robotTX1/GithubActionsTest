@@ -1,9 +1,11 @@
-name: publish
+name: Publish Docker images
 
 on:
-  push:
-    tags:
-      - "*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag for the Docker image (e.g. v1.0.0)'
+        required: true
 
 env:
   REGISTRY_IMAGE: ${{ vars.DOCKERHUB_USERNAME }}/github-actions-test
@@ -101,12 +103,11 @@ jobs:
       - name: Create manifest list and push
         working-directory: ${{ runner.temp }}/digests
         run: |
-          VERSION=${GITHUB_REF_NAME}  # tag name, e.g. v1.2.3
           docker buildx imagetools create \
-          -t $REGISTRY_IMAGE:$VERSION \
+          -t $REGISTRY_IMAGE:${{ github.event.inputs.version }} \
           -t $REGISTRY_IMAGE:latest \
           $(printf '$REGISTRY_IMAGE@sha256:%s ' *)
 
       - name: Inspect image
         run: |
-          docker buildx imagetools inspect $REGISTRY_IMAGE:${GITHUB_REF_NAME}
+          docker buildx imagetools inspect $REGISTRY_IMAGE:${{ github.event.inputs.version }}
